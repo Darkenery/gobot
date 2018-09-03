@@ -1,0 +1,17 @@
+bot:
+  api:
+    url: "https://api.telegram.org/bot"
+    key: "YOUR_KEY"
+    timeout: 10000000000
+    keepalive: 1000000000
+    handshake_timeout: 1000000000
+  update_getter:
+    timeout: 0
+    limit: 1
+    allowed_updates:
+      - "message"
+  generate_random_text:
+    word_limit: 40
+redis:
+  host: "127.0.0.1"
+  port: "16379"
