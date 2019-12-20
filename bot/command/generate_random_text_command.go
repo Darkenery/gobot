@@ -13,7 +13,7 @@ import (
 
 type GenerateRandomTextCommand struct {
 	botApi    *api.BotApi
-	redis     *redis.Client
+	redis     *redis.ClusterClient
 	wordLimit int
 }
 
@@ -21,7 +21,7 @@ var (
 	WrongCommandParameterErr = errors.New("wrong amount of parameters")
 )
 
-func NewGenerateRandomTextCommand(botApi *api.BotApi, redis *redis.Client, wordLimit int) CommandInterface {
+func NewGenerateRandomTextCommand(botApi *api.BotApi, redis *redis.ClusterClient, wordLimit int) CommandInterface {
 	return &GenerateRandomTextCommand{
 		botApi:    botApi,
 		redis:     redis,
@@ -76,7 +76,7 @@ func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) erro
 			break
 		}
 
-		if currentWordCount == c.wordLimit {
+		if currentWordCount >= c.wordLimit {
 			break
 		}
 
@@ -84,7 +84,7 @@ func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) erro
 	}
 
 	var message string
-	if len(result) != 0 {
+	if len(result) > 2 {
 		message = result
 	} else {
 		message = "Чёт не получилось, сорян"

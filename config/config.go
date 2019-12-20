@@ -8,21 +8,12 @@ import (
 
 type Cfg struct {
 	Bot   botConfig `yaml:"bot"`
-	Redis redis     `yaml:"redis"`
 }
 
 type botConfig struct {
 	ApiConfig                       apiConfig                       `yaml:"api"`
 	UpdateGetter                    updateGetterConfig              `yaml:"update_getter"`
-	WordLimit                       int                             `yaml:"word_limit"`
 	GenerateRandomTextCommandConfig generateRandomTextCommandConfig `yaml:"generate_random_text"`
-}
-
-type redis struct {
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
 }
 
 type apiConfig struct {

@@ -3,10 +3,10 @@ package api
 import (
 	"github.com/darkenery/gobot/api/httputils"
 	"github.com/darkenery/gobot/api/model"
+	"github.com/darkenery/gobot/api/model/response"
 	"github.com/pkg/errors"
 	"net/http"
 	"time"
-	"github.com/darkenery/gobot/api/model/response"
 )
 
 var (

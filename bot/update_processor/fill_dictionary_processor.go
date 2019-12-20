@@ -9,10 +9,10 @@ import (
 )
 
 type FillDictionaryProcessor struct {
-	redis *redis.Client
+	redis *redis.ClusterClient
 }
 
-func NewFillDictionaryProcessor(redis *redis.Client) UpdateProcessorInterface {
+func NewFillDictionaryProcessor(redis *redis.ClusterClient) UpdateProcessorInterface {
 	return &FillDictionaryProcessor{
 		redis: redis,
 	}
@@ -21,6 +21,9 @@ func NewFillDictionaryProcessor(redis *redis.Client) UpdateProcessorInterface {
 func (fdp *FillDictionaryProcessor) Process(incomingMessage *model.Message) (err error) {
 	text := util.ExtractTextFromMessage(incomingMessage)
 	words := strings.Split(text, " ")
+	if len(words) < 2 {
+		return nil
+	}
 
 	for i, word := range words {
 		currentWordSetKey := fmt.Sprintf(util.SetWordRedisTemplate, word)

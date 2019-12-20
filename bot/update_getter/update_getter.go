@@ -12,14 +12,14 @@ const lastUpdateIdRedisKey = "GoBot.LastUpdateId"
 type UpdateGetter struct {
 	botApi          *api.BotApi
 	updateHandlerCh chan []*model.Update
-	redis           *redis.Client
+	redis           *redis.ClusterClient
 	limit           int
 	timeout         int
 	allowedUpdates  []string
 	logger          log.Logger
 }
 
-func NewUpdateGetter(botApi *api.BotApi, ch chan []*model.Update, redis *redis.Client, limit, timeout int, allowedUpdates []string, logger log.Logger) *UpdateGetter {
+func NewUpdateGetter(botApi *api.BotApi, ch chan []*model.Update, redis *redis.ClusterClient, limit, timeout int, allowedUpdates []string, logger log.Logger) *UpdateGetter {
 	return &UpdateGetter{
 		botApi:          botApi,
 		updateHandlerCh: ch,

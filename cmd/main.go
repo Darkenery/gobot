@@ -1,21 +1,21 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/darkenery/gobot/api"
 	"github.com/darkenery/gobot/api/model"
 	"github.com/darkenery/gobot/bot/command"
 	"github.com/darkenery/gobot/bot/command_handler"
 	"github.com/darkenery/gobot/bot/update_getter"
 	"github.com/darkenery/gobot/bot/update_handler"
+	"github.com/darkenery/gobot/bot/update_processor"
 	"github.com/darkenery/gobot/config"
-	"flag"
-	"fmt"
 	"github.com/go-kit/kit/log"
 	"github.com/go-redis/redis"
 	"os"
 	"os/signal"
 	"syscall"
-	"github.com/darkenery/gobot/bot/update_processor"
 )
 
 var (
@@ -43,15 +43,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
-	})
+	redisHost := os.Getenv("REDIS_HOST")
+	redisPort := os.Getenv("REDIS_PORT")
+
+	redisClient := redis.NewClusterClient(&redis.ClusterOptions{Addrs:[]string{redisHost+":"+redisPort}})
+
 	updatesCh := make(chan []*model.Update)
 	messageChan := make(chan *model.Message)
 
+	botKey := os.Getenv("TG_BOT_API_KEY")
+
 	botApi := api.NewBotApi(
 		cfg.Bot.ApiConfig.Url,
-		cfg.Bot.ApiConfig.Key,
+		botKey,
 		cfg.Bot.ApiConfig.Timeout,
 		cfg.Bot.ApiConfig.KeepAlive,
 		cfg.Bot.ApiConfig.HandshakeTimeout,
@@ -74,10 +78,12 @@ func main() {
 	)
 
 	fillDictionaryProcessor := update_processor.NewFillDictionaryProcessor(redisClient)
+	loggerProcessor := update_processor.NewLoggerProcessor(logger)
+	updateHandler.AddProcessor(loggerProcessor)
 	updateHandler.AddProcessor(fillDictionaryProcessor)
 
-	commandHandler := command_handler.NewCommandHandler(messageChan)
-	genRndTxtCmd := command.NewGenerateRandomTextCommand(botApi, redisClient, cfg.Bot.WordLimit)
+	commandHandler := command_handler.NewCommandHandler(messageChan, logger)
+	genRndTxtCmd := command.NewGenerateRandomTextCommand(botApi, redisClient, cfg.Bot.GenerateRandomTextCommandConfig.WordLimit)
 	commandHandler.AddCommand("/gen", &genRndTxtCmd)
 
 	errCh := make(chan error)
