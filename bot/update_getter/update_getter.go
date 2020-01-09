@@ -31,11 +31,11 @@ func NewUpdateGetter(botApi *api.BotApi, ch chan []*model.Update, redis *redis.C
 	}
 }
 
-func (u *UpdateGetter) GetUpdates() error {
+func (u *UpdateGetter) GetUpdates() {
 	lastUpdateIdInt64, err := u.redis.Get(lastUpdateIdRedisKey).Int64()
 	if err != nil && err != redis.Nil {
 		u.logger.Log("err", err)
-		return err
+		return
 	}
 
 	lastUpdateId := int(lastUpdateIdInt64)

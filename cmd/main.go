@@ -77,7 +77,7 @@ func main() {
 		logger,
 	)
 
-	fillDictionaryProcessor := update_processor.NewFillDictionaryProcessor(redisClient)
+	fillDictionaryProcessor := update_processor.NewFillOneOrderDictionaryProcessor(redisClient)
 	loggerProcessor := update_processor.NewLoggerProcessor(logger)
 	updateHandler.AddProcessor(loggerProcessor)
 	updateHandler.AddProcessor(fillDictionaryProcessor)

@@ -1,13 +1,14 @@
 package command
 
 import (
+	"errors"
+	"fmt"
 	"github.com/darkenery/gobot/api"
 	"github.com/darkenery/gobot/api/model"
 	"github.com/darkenery/gobot/bot/util"
-	"errors"
-	"fmt"
 	"github.com/go-redis/redis"
 	"math/rand"
+	"strconv"
 	"strings"
 )
 
@@ -31,18 +32,21 @@ func NewGenerateRandomTextCommand(botApi *api.BotApi, redis *redis.ClusterClient
 
 func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) error {
 	text := util.ExtractTextFromMessage(incomingMessage)
-	words := strings.Split(text, " ")
-	if len(words) < 1 {
+	inputWords := strings.Split(text, " ")
+	if len(inputWords) < 1 {
 		return WrongCommandParameterErr
 	}
-	word := words[0]
+	word := inputWords[0]
 
 	var (
 		relations        []string
 		err              error
-		result           string
+		result           []string
 		currentWordCount int
+		weightSum        int
 	)
+
+	result = append(result, word)
 
 	for {
 		wordKey := fmt.Sprintf(util.SetWordRedisTemplate, word)
@@ -55,13 +59,11 @@ func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) erro
 			break
 		}
 
-		result += word + " "
-		currentWordCount++
-
 		if len(relations) == 0 {
 			break
 		}
 
+		weightSum = 0
 		relationHashes := make(map[int]map[string]string)
 		for i, relation := range relations {
 			relationHash, err := c.redis.HGetAll(relation).Result()
@@ -69,6 +71,8 @@ func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) erro
 				continue
 			}
 
+			weight, _ := strconv.Atoi(relationHash["weight"])
+			weightSum += weight
 			relationHashes[i] = relationHash
 		}
 
@@ -76,19 +80,23 @@ func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) erro
 			break
 		}
 
+		word = relationHashes[rand.Intn(len(relationHashes))]["word"]
+		result = append(result, word)
+		currentWordCount++
+
 		if currentWordCount >= c.wordLimit {
 			break
 		}
-
-		word = relationHashes[rand.Intn(len(relationHashes))]["word"]
 	}
 
 	var message string
 	if len(result) > 2 {
-		message = result
+		message = strings.Join(result, " ")
 	} else {
 		message = "Чёт не получилось, сорян"
 	}
+
+	message = util.UcFirst(message)
 
 	_, err = c.botApi.SendMessage(
 		incomingMessage.Chat.Id,

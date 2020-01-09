@@ -1,26 +1,29 @@
 package update_processor
 
 import (
-	"github.com/go-redis/redis"
+	"fmt"
 	"github.com/darkenery/gobot/api/model"
 	"github.com/darkenery/gobot/bot/util"
+	"github.com/go-redis/redis"
 	"strings"
-	"fmt"
 )
 
-type FillDictionaryProcessor struct {
+type FillOneOrderDictionaryProcessor struct {
 	redis *redis.ClusterClient
 }
 
-func NewFillDictionaryProcessor(redis *redis.ClusterClient) UpdateProcessorInterface {
-	return &FillDictionaryProcessor{
+func NewFillOneOrderDictionaryProcessor(redis *redis.ClusterClient) UpdateProcessorInterface {
+	return &FillOneOrderDictionaryProcessor{
 		redis: redis,
 	}
 }
 
-func (fdp *FillDictionaryProcessor) Process(incomingMessage *model.Message) (err error) {
+func (fdp *FillOneOrderDictionaryProcessor) Process(incomingMessage *model.Message) (err error) {
 	text := util.ExtractTextFromMessage(incomingMessage)
+	text = fdp.preProcessText(text)
+
 	words := strings.Split(text, " ")
+	words = fdp.filterWords(words)
 	if len(words) < 2 {
 		return nil
 	}
@@ -53,10 +56,30 @@ func (fdp *FillDictionaryProcessor) Process(incomingMessage *model.Message) (err
 		}
 
 		//if the next word is last - stop filling
-		if len(words) - 1 <= i + 1 {
+		if len(words)-1 <= i+1 {
 			break
 		}
 	}
 
 	return nil
+}
+
+func (fdp *FillOneOrderDictionaryProcessor) preProcessText(text string) string {
+	text = util.ToLowerCase(text)
+	text = util.RemoveWhitespace(text)
+	text = util.RemoveNonWordSymbols(text)
+
+	return text
+}
+
+func (fdp *FillOneOrderDictionaryProcessor) filterWords(words []string) []string {
+	var result []string
+
+	for _, word := range words {
+		if word != " " {
+			result = append(result, word)
+		}
+	}
+
+	return result
 }
