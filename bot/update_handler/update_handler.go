@@ -5,6 +5,7 @@ import (
 	"github.com/darkenery/gobot/api/type"
 	"github.com/darkenery/gobot/bot/update_processor"
 	"github.com/go-kit/kit/log"
+	"time"
 )
 
 type UpdateHandler struct {
@@ -35,8 +36,12 @@ func (uh *UpdateHandler) HandleUpdates() {
 		err          error
 	)
 
+	now := time.Now().Unix()
 	for updates := range uh.updaterCh {
 		for _, update := range updates {
+			if now - update.Message.Date > 300 {
+				continue
+			}
 			message := update.Message
 			for _, entity := range message.Entities {
 				if entity.Type == _type.BotCommandEntityType {

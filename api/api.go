@@ -53,7 +53,7 @@ func (b *BotApi) GetMe() (user *model.User, err error) {
 	return nil, parseError
 }
 
-func (b *BotApi) SendMessage(chatId, replyToMessageId int, text string) (message *model.Message, err error) {
+func (b *BotApi) SendMessage(chatId int64, replyToMessageId int, text string) (message *model.Message, err error) {
 	url := b.url + "/sendMessage"
 
 	sendMessageRequest := make(map[string]interface{})

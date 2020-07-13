@@ -3,7 +3,7 @@ package model
 type Message struct {
 	MessageId             int              `json:"message_id"`
 	From                  *User            `json:"from"`
-	Date                  int              `json:"date"`
+	Date                  int64            `json:"date"`
 	Chat                  *Chat            `json:"chat"`
 	ForwardFrom           *User            `json:"forward_from"`
 	ForwardFromChat       *Chat            `json:"forward_from_chat"`
