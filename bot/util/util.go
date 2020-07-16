@@ -3,6 +3,7 @@ package util
 import (
 	"github.com/darkenery/gobot/api/model"
 	"github.com/darkenery/gobot/api/type"
+	"github.com/darkenery/gobot/service/consts"
 	"regexp"
 	"strings"
 	"unicode"
@@ -49,7 +50,7 @@ func RemoveWhitespace(text string) string {
 }
 
 func RemoveNonWordSymbols(text string) string {
-	reg, _ := regexp.Compile(`[^a-zа-яA-ZА-Я0-9\s]+`)
+	reg, _ := regexp.Compile(`[^a-zа-яA-ZА-Я0-9Ёё\s]+`)
 	return reg.ReplaceAllString(text, "")
 }
 
@@ -58,4 +59,12 @@ func UcFirst(text string) string {
 	words[0] = strings.Title(words[0])
 
 	return strings.Join(words, " ")
+}
+
+func ClearTokens(text string) string {
+	text = strings.ReplaceAll(text, consts.StartToken, "")
+	text = strings.ReplaceAll(text, consts.FinishToken, "")
+	text = strings.Trim(text, " ")
+
+	return text
 }

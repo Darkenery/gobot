@@ -35,7 +35,7 @@ func (b *BotApi) GetMe() (user *model.User, err error) {
 		url,
 		"GET",
 		nil,
-		model.Response{},
+		model.GetMeResponse{},
 	)
 
 	if err != nil {
@@ -46,8 +46,8 @@ func (b *BotApi) GetMe() (user *model.User, err error) {
 		return nil, httpError
 	}
 
-	if user, ok := data.(*model.Response).Result.(*model.User); ok {
-		return user, nil
+	if response, ok := data.(*model.GetMeResponse); ok {
+		return response.Result, nil
 	}
 
 	return nil, parseError

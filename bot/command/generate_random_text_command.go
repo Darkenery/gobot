@@ -1,108 +1,46 @@
 package command
 
 import (
-	"errors"
-	"fmt"
 	"github.com/darkenery/gobot/api"
 	"github.com/darkenery/gobot/api/model"
 	"github.com/darkenery/gobot/bot/util"
-	"github.com/go-redis/redis"
-	"math/rand"
-	"strconv"
+	"github.com/darkenery/gobot/service"
 	"strings"
 )
 
 type GenerateRandomTextCommand struct {
-	botApi    *api.BotApi
-	redis     *redis.ClusterClient
-	wordLimit int
+	botApi           *api.BotApi
+	textGeneratorSvc service.TextGeneratorServiceInterface
+	wordLimit        int
+	order            int
 }
 
-var (
-	WrongCommandParameterErr = errors.New("wrong amount of parameters")
-)
-
-func NewGenerateRandomTextCommand(botApi *api.BotApi, redis *redis.ClusterClient, wordLimit int) CommandInterface {
+func NewGenerateRandomTextCommand(botApi *api.BotApi, textGeneratorSvc service.TextGeneratorServiceInterface, wordLimit int, order int) CommandInterface {
 	return &GenerateRandomTextCommand{
-		botApi:    botApi,
-		redis:     redis,
-		wordLimit: wordLimit,
+		botApi:           botApi,
+		textGeneratorSvc: textGeneratorSvc,
+		wordLimit:        wordLimit,
+		order:            order,
 	}
 }
 
 func (c *GenerateRandomTextCommand) Execute(incomingMessage *model.Message) error {
 	text := util.ExtractTextFromMessage(incomingMessage)
-	inputWords := strings.Split(text, " ")
-	if len(inputWords) < 1 {
-		return WrongCommandParameterErr
-	}
-	word := inputWords[0]
-
-	var (
-		relations        []string
-		err              error
-		result           []string
-		currentWordCount int
-		weightSum        int
-	)
-
-	result = append(result, word)
-
-	for {
-		wordKey := fmt.Sprintf(util.SetWordRedisTemplate, word)
-		relations, err = c.redis.SMembers(wordKey).Result()
-		if err != nil && err != redis.Nil {
-			return err
-		}
-
-		if err == redis.Nil {
-			break
-		}
-
-		if len(relations) == 0 {
-			break
-		}
-
-		weightSum = 0
-		relationHashes := make(map[int]map[string]string)
-		for i, relation := range relations {
-			relationHash, err := c.redis.HGetAll(relation).Result()
-			if err != nil {
-				continue
-			}
-
-			weight, _ := strconv.Atoi(relationHash["weight"])
-			weightSum += weight
-			relationHashes[i] = relationHash
-		}
-
-		if len(relationHashes) == 0 {
-			break
-		}
-
-		word = relationHashes[rand.Intn(len(relationHashes))]["word"]
-		result = append(result, word)
-		currentWordCount++
-
-		if currentWordCount >= c.wordLimit {
-			break
-		}
-	}
+	words := strings.Split(text, " ")
 
 	var message string
-	if len(result) > 2 {
-		message = strings.Join(result, " ")
+	var err error
+
+	if len(words) > 0 {
+		message, err = c.textGeneratorSvc.Generate(words[0], c.wordLimit, c.order)
 	} else {
-		message = "Чёт не получилось, сорян"
+		message, err = c.textGeneratorSvc.Generate("", c.wordLimit, c.order)
 	}
 
-	message = util.UcFirst(message)
+	if err != nil {
+		message = "Ошибонька"
+	}
 
-	_, err = c.botApi.SendMessage(
-		incomingMessage.Chat.Id,
-		incomingMessage.MessageId,
-		message,
-	)
-
+	_, _ = c.botApi.SendMessage(incomingMessage.Chat.Id, incomingMessage.MessageId, message)
 	return err
 }

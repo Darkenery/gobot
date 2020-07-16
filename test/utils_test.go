@@ -26,11 +26,11 @@ STRING`
 }
 
 func TestRemoveNonWordSymbols(t *testing.T) {
-	text := `I. AM, T3ST; STRING! ХАХА!`
+	text := `I. AM, T3ST; STRING! ХАХА! Ьь Ъъ Ёё`
 	result := util.RemoveNonWordSymbols(text)
 
-	if result != "I AM T3ST STRING ХАХА" {
-		t.Error("Expected 'I AM T3ST STRING ХАХА', got ", result)
+	if result != "I AM T3ST STRING ХАХА Ьь Ъъ Ёё" {
+		t.Error("Expected 'I AM T3ST STRING ХАХА Ьь Ёё', got ", result)
 	}
 }
 
